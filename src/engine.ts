@@ -28,7 +28,7 @@ export class VoiceBot extends EventEmitter<VoiceBotEvents> {
   private isSpeaking = false;
   private lastResponseTime = 0;
   private minimumTextLength = 3;
-  private cooldownPeriod = 1000; // 1 second cooldown after speaking
+  private cooldownPeriod = 1000;
   private abortController: AbortController | null = null;
   private isAborted = false;
 
@@ -40,32 +40,26 @@ export class VoiceBot extends EventEmitter<VoiceBotEvents> {
     super();
   }
 
-  // Forcefully abort current processing
   abort(): void {
     this.isAborted = true;
     if (this.abortController) {
       this.abortController.abort();
     }
-    console.log("🛑 Engine processing aborted");
   }
 
-  // Reset abort state for new session
   reset(): void {
     this.isAborted = false;
     this.abortController = new AbortController();
-    console.log("🔄 Engine reset for new session");
   }
 
   async run(audioIn: AsyncIterable<Buffer>): Promise<void> {
-    this.reset(); // Start fresh
+    this.reset();
     const history: ChatHistory = [];
     let accumulatedText = "";
 
     try {
       for await (const chunk of this.stt.transcribe(audioIn)) {
-        // Check if we should abort processing
         if (this.isAborted || this.abortController?.signal.aborted) {
-          console.log("🛑 STT processing aborted");
           break;
         }
 
@@ -81,13 +75,11 @@ export class VoiceBot extends EventEmitter<VoiceBotEvents> {
             ? chunk.text
             : accumulatedText;
 
-        // Skip processing if conditions aren't met
         if (!this.shouldProcessText(finalText)) {
           accumulatedText = "";
           continue;
         }
 
-        console.log(`Processing: "${finalText}"`);
         await this.processUserInput(finalText, history);
         accumulatedText = "";
       }
@@ -99,32 +91,25 @@ export class VoiceBot extends EventEmitter<VoiceBotEvents> {
   }
 
   private shouldProcessText(text: string): boolean {
-    // Don't process if aborted
     if (this.isAborted) {
       return false;
     }
 
     const trimmedText = text.trim();
 
-    // Skip if text is too short
     if (trimmedText.length < this.minimumTextLength) {
       return false;
     }
 
-    // Skip if currently speaking
     if (this.isSpeaking) {
-      console.log("Skipping input - AI is currently speaking");
       return false;
     }
 
-    // Skip if within cooldown period
     const timeSinceLastResponse = performance.now() - this.lastResponseTime;
     if (timeSinceLastResponse < this.cooldownPeriod) {
-      console.log("Skipping input - within cooldown period");
       return false;
     }
 
-    // Skip common noise patterns
     const noisePatterns = [
       /^(uh|um|ah|hmm|er|oh)$/i,
       /^[.,!?;:\s]+$/,
@@ -133,7 +118,6 @@ export class VoiceBot extends EventEmitter<VoiceBotEvents> {
     ];
 
     if (noisePatterns.some((pattern) => pattern.test(trimmedText))) {
-      console.log(`Skipping noise: "${trimmedText}"`);
       return false;
     }
 
@@ -180,7 +164,6 @@ export class VoiceBot extends EventEmitter<VoiceBotEvents> {
         fullTtsMs: fullTtsDone - t0,
       });
 
-      // Add user input and AI response to history
       history.push({ role: "user", content: finalText });
       history.push({
         role: "assistant",
@@ -191,11 +174,6 @@ export class VoiceBot extends EventEmitter<VoiceBotEvents> {
     } finally {
       this.isSpeaking = false;
       this.emit("speaking", false);
-
-      // Small delay to prevent immediate re-triggering
-      setTimeout(() => {
-        console.log("Ready for next input...");
-      }, 500);
     }
   }
 

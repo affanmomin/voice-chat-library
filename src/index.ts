@@ -1,6 +1,5 @@
 // src/index.ts
-// @ts-nocheck
-
+//@ts-nocheck
 import "dotenv/config";
 import { DeepgramSTT } from "./providers/deepgram";
 import { OpenAIChat } from "./providers/openai-llm";
@@ -19,10 +18,6 @@ if (missingVars.length > 0) {
   process.exit(1);
 }
 
-console.log("Voice Bot Starting...");
-console.log("🔄 Walkie-talkie mode: Only one party speaks at a time\n");
-
-// Speaker setup with larger buffer
 const speaker = new Speaker({
   sampleRate: 24000,
   channels: 1,
@@ -35,14 +30,12 @@ speaker.on("drain", () => {
   // Audio buffer drained, this is normal
 });
 
-// Bot and state management
 const bot = new VoiceBot(new DeepgramSTT(), new OpenAIChat(), new OpenAITTS());
 let isAISpeaking = false;
 let isMicrophoneActive = false;
-let currentMicInstance = null;
+let currentMicInstance: ReturnType<typeof mic> | null = null;
 let currentBotProcess: Promise<void> | null = null;
 
-// Create a new microphone instance
 function createMicInstance() {
   return mic({
     rate: "48000",
@@ -51,16 +44,13 @@ function createMicInstance() {
   });
 }
 
-// Start microphone and bot processing
 function startListening() {
   if (isMicrophoneActive || isAISpeaking) {
-    return; // Already listening or AI is speaking
+    return;
   }
 
-  console.log("🎤 Ready to listen - speak now!");
   isMicrophoneActive = true;
 
-  // Create a fresh microphone instance
   currentMicInstance = createMicInstance();
   const recorder = currentMicInstance.getAudioStream();
   currentMicInstance.start();
@@ -73,16 +63,13 @@ function startListening() {
   });
 }
 
-// Stop microphone completely
 function stopListening() {
   if (!isMicrophoneActive) {
-    return; // Already stopped
+    return;
   }
 
-  console.log("🔇 Microphone stopped");
   isMicrophoneActive = false;
 
-  // Abort any ongoing engine processing
   bot.abort();
 
   if (currentMicInstance) {
@@ -99,7 +86,6 @@ function stopListening() {
   }
 }
 
-// Audio chunk handling
 function writeAudioChunk(chunk: Buffer) {
   if (chunk.length > 0) {
     try {
@@ -110,7 +96,6 @@ function writeAudioChunk(chunk: Buffer) {
   }
 }
 
-// Bot event handlers
 bot.on("sttChunk", (text) => {
   if (text.trim() && text.length > 2 && !isAISpeaking) {
     process.stdout.write(`\r🎯 Listening: "${text}"`);
@@ -119,9 +104,8 @@ bot.on("sttChunk", (text) => {
 
 bot.on("llmToken", (token) => {
   if (!isAISpeaking) {
-    console.log("\n🤖 AI Response:");
     isAISpeaking = true;
-    stopListening(); // Stop microphone AND abort engine processing
+    stopListening();
   }
   process.stdout.write(token);
 });
@@ -132,27 +116,18 @@ bot.on("audioChunk", (chunk) => {
 
 bot.on("speaking", (isSpeaking) => {
   if (isSpeaking) {
-    console.log("\n🔊 AI is speaking... (processing STOPPED)");
     isAISpeaking = true;
-    stopListening(); // Ensure everything is stopped
+    stopListening();
   } else {
-    // AI finished speaking - wait a moment then allow user input
     setTimeout(() => {
-      console.log("\n✅ AI finished speaking");
       isAISpeaking = false;
-      startListening(); // Restart with fresh instance and reset engine
-    }, 2000); // Increased delay to ensure audio finishes completely
+      startListening();
+    }, 2000);
   }
 });
 
 bot.on("metrics", (metrics) => {
-  console.log(
-    `\n⏱️  STT: ${Math.round(
-      metrics.sttCompleteMs
-    )}ms | First Token: ${Math.round(metrics.firstTokenMs)}ms\n`
-  );
+  // ... existing code ...
 });
 
-// Start the application
-console.log("🚀 Voice bot ready!");
 startListening();

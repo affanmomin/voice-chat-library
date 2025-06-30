@@ -26,14 +26,6 @@ async function* readWavFile(filePath: string): AsyncGenerator<Buffer> {
       headerBuffer = Buffer.concat([headerBuffer, chunk]);
 
       if (headerBuffer.length >= 44) {
-        const sampleRate = headerBuffer.readUInt32LE(24);
-        const numChannels = headerBuffer.readUInt16LE(22);
-        const bitsPerSample = headerBuffer.readUInt16LE(34);
-
-        console.log(
-          `Processing WAV: ${sampleRate}Hz, ${numChannels}ch, ${bitsPerSample}-bit`
-        );
-
         const audioData = headerBuffer.slice(44);
         if (audioData.length > 0) {
           yield audioData;
@@ -62,8 +54,6 @@ async function* simulateRealTimeStream(
 }
 
 async function processWavFile(filePath: string) {
-  console.log(`Processing WAV file: ${filePath}`);
-
   const systemAudio = new StreamingAudioPlayer(24000);
   const bot = new VoiceBot(
     new DeepgramSTT(),
@@ -72,9 +62,7 @@ async function processWavFile(filePath: string) {
   );
 
   bot.on("sttChunk", (text) => {
-    if (text.trim()) {
-      console.log(`Transcribed: "${text}"`);
-    }
+    // ... existing code ...
   });
 
   bot.on("llmToken", (token) => {
@@ -92,11 +80,7 @@ async function processWavFile(filePath: string) {
   });
 
   bot.on("metrics", (metrics) => {
-    console.log(
-      `\nMetrics - STT: ${Math.round(
-        metrics.sttCompleteMs
-      )}ms | First Token: ${Math.round(metrics.firstTokenMs)}ms\n`
-    );
+    // ... existing code ...
   });
 
   try {
@@ -105,11 +89,9 @@ async function processWavFile(filePath: string) {
 
     await bot.run(realTimeStream);
 
-    console.log("Waiting for processing to complete...");
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     await systemAudio.finish();
-    console.log("File processing completed!");
   } catch (error) {
     console.error("Error processing file:", error);
     await systemAudio.finish();
@@ -132,7 +114,6 @@ if (!filePath.toLowerCase().endsWith(".wav")) {
 
 processWavFile(filePath)
   .then(() => {
-    console.log("Processing completed successfully!");
     process.exit(0);
   })
   .catch((error) => {
