@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    // Modern JS emit
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    // Interop for CJS libs like `mic`
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    // Allow .ts extensions in imports
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    // Type-safety
+    "strict": true,
+    "skipLibCheck": true, // don’t choke on 3rd-party typings
+    // Build output
+    "outDir": "dist",
+    "rootDir": "src",
+    // 👇 where TypeScript looks for *ambient* typings
+    "typeRoots": [
+      "./types", // your custom stubs
+      "./node_modules/@types" // DefinitelyTyped packages
+    ]
+  },
+  "include": [
+    "src/**/*",
+    "types/**/*"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
+}
