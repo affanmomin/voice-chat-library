@@ -19,8 +19,6 @@ if (missingVars.length > 0) {
 }
 
 async function* readWavFile(filePath: string): AsyncGenerator<Buffer> {
-  console.log(`📁 Reading WAV file: ${filePath}`);
-
   const fileStream = createReadStream(filePath);
   const reader = new wav.Reader();
   let audioBytesYielded = 0;
@@ -31,20 +29,6 @@ async function* readWavFile(filePath: string): AsyncGenerator<Buffer> {
 
   reader.on("format", (fmt: any) => {
     format = fmt;
-    console.log(
-      `📊 Audio format: ${fmt.sampleRate}Hz, ${fmt.bitDepth}-bit, ${fmt.channels} channel(s)`
-    );
-
-    // Verify format matches Deepgram expectations
-    if (fmt.sampleRate !== 48000) {
-      console.warn(`⚠️  Sample rate: ${fmt.sampleRate}Hz (expected 48000Hz)`);
-    }
-    if (fmt.bitDepth !== 16) {
-      console.warn(`⚠️  Bit depth: ${fmt.bitDepth}-bit (expected 16-bit)`);
-    }
-    if (fmt.channels !== 1) {
-      console.warn(`⚠️  Channels: ${fmt.channels} (expected 1 for mono)`);
-    }
   });
 
   reader.on("data", (chunk: Buffer) => {
@@ -53,19 +37,15 @@ async function* readWavFile(filePath: string): AsyncGenerator<Buffer> {
   });
 
   reader.on("end", () => {
-    console.log(`✅ WAV file loaded: ${audioBytesYielded} audio bytes`);
     readerFinished = true;
   });
 
   reader.on("error", (error: Error) => {
-    console.error(`❌ WAV reader error:`, error);
     readerError = error;
   });
 
-  // Start reading the file
   fileStream.pipe(reader);
 
-  // Wait for format to be detected
   while (!format && !readerError) {
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
@@ -74,7 +54,6 @@ async function* readWavFile(filePath: string): AsyncGenerator<Buffer> {
     throw readerError;
   }
 
-  // Yield chunks as they arrive
   while (!readerFinished || chunks.length > 0) {
     if (readerError) {
       throw readerError;
@@ -93,21 +72,19 @@ async function* simulateRealTimeStream(
   audioStream: AsyncGenerator<Buffer>,
   chunkSizeMs: number = 100
 ): AsyncGenerator<Buffer> {
-  console.log(`⏱️  Simulating real-time audio stream...`);
-  const chunkSize = Math.floor((48000 * 2 * chunkSizeMs) / 1000); // 48kHz, 16-bit (2 bytes)
+  const chunkSize = Math.floor((48000 * 2 * chunkSizeMs) / 1000);
 
   for await (const chunk of audioStream) {
     for (let i = 0; i < chunk.length; i += chunkSize) {
       const smallChunk = chunk.slice(i, i + chunkSize);
       yield smallChunk;
-      await new Promise((resolve) => setTimeout(resolve, chunkSizeMs * 0.8)); // Slightly faster than real-time
+      await new Promise((resolve) => setTimeout(resolve, chunkSizeMs * 0.8));
     }
   }
-  console.log(`✅ Audio stream complete`);
 }
 
 async function processWavFile(filePath: string) {
-  const systemAudio = new StreamingAudioPlayer(24000); // Match the TTS output sample rate
+  const systemAudio = new StreamingAudioPlayer(24000);
   const metricsServer = new MetricsServer(9464);
   const bot = new VoiceBot(
     new DeepgramSTT(),
@@ -115,7 +92,6 @@ async function processWavFile(filePath: string) {
     new OpenAITTS()
   );
 
-  // Start metrics server
   await metricsServer.start();
 
   bot.on("sttChunk", (text) => {
@@ -139,11 +115,9 @@ async function processWavFile(filePath: string) {
   });
 
   bot.on("metrics", (metrics) => {
-    // Record metrics to Prometheus
     const { recordMetrics } = require("./metrics");
     recordMetrics(metrics);
 
-    // Log metrics to console (only log defined values)
     const parts = [];
     if (typeof metrics.sttCompleteMs === "number")
       parts.push(`STT: ${metrics.sttCompleteMs.toFixed(0)}ms`);
@@ -160,21 +134,17 @@ async function processWavFile(filePath: string) {
   });
 
   try {
-    console.log(`🚀 Starting audio processing...`);
     const audioStream = readWavFile(filePath);
     const realTimeStream = simulateRealTimeStream(audioStream);
 
-    console.log(`🤖 Running voice bot with real-time stream...`);
     await bot.run(realTimeStream);
 
-    console.log(`\n⏳ Waiting for completion...`);
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     await systemAudio.finish();
     await metricsServer.stop();
-    console.log(`✅ Processing complete!`);
   } catch (error) {
-    console.error("❌ Error processing file:", error);
+    console.error("Error processing file:", error);
     await systemAudio.finish();
     await metricsServer.stop();
     process.exit(1);

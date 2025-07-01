@@ -1,4 +1,3 @@
-// src/metrics-server.ts
 import { createServer, IncomingMessage, ServerResponse } from "http";
 import { registry } from "./metrics";
 
@@ -53,12 +52,9 @@ export class MetricsServer {
     const metrics = await registry.metrics();
     const lines = metrics.split("\n");
 
-    // Extract our 3 core metrics
     const sttMetrics = lines.filter((line) => line.includes("stt_duration_ms"));
     const llmMetrics = lines.filter((line) => line.includes("llm_duration_ms"));
     const ttsMetrics = lines.filter((line) => line.includes("tts_duration_ms"));
-
-    // Parse histogram data for percentiles
     const parseHistogram = (metricLines: string[], metricName: string) => {
       const buckets = metricLines.filter((line) =>
         line.includes("_bucket{le=")
@@ -84,14 +80,12 @@ export class MetricsServer {
     const llmData = parseHistogram(llmMetrics, "llm_duration_ms");
     const ttsData = parseHistogram(ttsMetrics, "tts_duration_ms");
 
-    // Helper function to format time
     const formatTime = (ms: number) => {
       if (ms === 0) return "0ms";
       if (ms < 1000) return `${ms}ms`;
       return `${(ms / 1000).toFixed(1)}s`;
     };
 
-    // Helper function to get status
     const getStatus = (
       value: number,
       goodThreshold: number,

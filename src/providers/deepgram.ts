@@ -1,4 +1,3 @@
-// src/providers/deepgram.ts
 import { STTProvider } from "../providers";
 import { TranscriptChunk } from "../types";
 import { createClient } from "@deepgram/sdk";

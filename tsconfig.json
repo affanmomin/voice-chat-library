@@ -12,19 +12,17 @@
     "noEmit": true,
     // Type-safety
     "strict": true,
-    "skipLibCheck": true, // don’t choke on 3rd-party typings
+    "skipLibCheck": true, // don't choke on 3rd-party typings
     // Build output
     "outDir": "dist",
     "rootDir": "src",
-    // 👇 where TypeScript looks for *ambient* typings
     "typeRoots": [
-      "./types", // your custom stubs
-      "./node_modules/@types" // DefinitelyTyped packages
+      "./src/types",
+      "./node_modules/@types"
     ]
   },
   "include": [
-    "src/**/*",
-    "types/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "dist",

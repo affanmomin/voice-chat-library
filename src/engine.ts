@@ -1,4 +1,3 @@
-// src/engine.ts
 import {
   STTProvider,
   LLMProvider,
@@ -84,7 +83,6 @@ export class VoiceBot extends EventEmitter<VoiceBotEvents> {
         accumulatedText = "";
       }
 
-      // Process any remaining accumulated text at the end of the stream
       if (accumulatedText.trim() && this.shouldProcessText(accumulatedText)) {
         await this.processUserInput(accumulatedText.trim(), history);
       }

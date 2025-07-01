@@ -1,4 +1,3 @@
-// src/providers/openai-tts.ts
 import OpenAI from "openai";
 import { TTSProvider } from "../providers";
 import { AudioChunk } from "../types";

@@ -1,4 +1,3 @@
-// src/providers.ts
 import { TranscriptChunk, TokenChunk, AudioChunk } from "./types";
 import { AsyncIterableLike } from "./utils";
 

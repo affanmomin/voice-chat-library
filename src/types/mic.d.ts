@@ -1,7 +1,7 @@
-import { EventEmitter } from "node:events";
-import { Readable } from "node:stream";
+declare module "mic" {
+  import { EventEmitter } from "node:events";
+  import { Readable } from "node:stream";
 
-declare namespace Mic {
   export interface MicOptions {
     rate?: string;
     channels?: string;
@@ -21,9 +21,7 @@ declare namespace Mic {
     resume(): void;
     getAudioStream(): Readable;
   }
+
+  function mic(options?: MicOptions): MicInstance;
+  export = mic;
 }
-
-/** CJS factory function returned by the real library */
-declare function mic(options?: Mic.MicOptions): Mic.MicInstance;
-
-export = mic;

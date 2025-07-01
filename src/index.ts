@@ -1,5 +1,3 @@
-// src/index.ts
-//@ts-nocheck
 import "dotenv/config";
 import { DeepgramSTT } from "./providers/deepgram";
 import { OpenAIChat } from "./providers/openai-llm";
@@ -27,9 +25,7 @@ const speaker = new Speaker({
   highWaterMark: 16384,
 });
 
-speaker.on("drain", () => {
-  // Audio buffer drained, this is normal
-});
+speaker.on("drain", () => {});
 
 const bot = new VoiceBot(new DeepgramSTT(), new OpenAIChat(), new OpenAITTS());
 const metricsServer = new MetricsServer(9464);
@@ -77,9 +73,7 @@ function stopListening() {
   if (currentMicInstance) {
     try {
       currentMicInstance.stop();
-    } catch (error) {
-      // Ignore stop errors
-    }
+    } catch (error) {}
     currentMicInstance = null;
   }
 
@@ -92,9 +86,7 @@ function writeAudioChunk(chunk: Buffer) {
   if (chunk.length > 0) {
     try {
       speaker.write(chunk);
-    } catch (error) {
-      // Ignore audio write errors
-    }
+    } catch (error) {}
   }
 }
 
@@ -129,11 +121,9 @@ bot.on("speaking", (isSpeaking) => {
 });
 
 bot.on("metrics", (metrics) => {
-  // Record metrics to Prometheus
   const { recordMetrics } = require("./metrics");
   recordMetrics(metrics);
 
-  // Optional: Log metrics to console for debugging (only log defined values)
   const parts = [];
   if (typeof metrics.sttCompleteMs === "number")
     parts.push(`STT: ${metrics.sttCompleteMs.toFixed(0)}ms`);
@@ -149,13 +139,11 @@ bot.on("metrics", (metrics) => {
   }
 });
 
-// Start metrics server
 metricsServer.start().then(() => {
   console.log("🚀 Voice bot started with Prometheus metrics enabled");
   startListening();
 });
 
-// Graceful shutdown
 process.on("SIGINT", async () => {
   console.log("\n🛑 Shutting down...");
   bot.abort();

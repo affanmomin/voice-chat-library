@@ -1,4 +1,3 @@
-// src/types.ts
 export type TranscriptChunk = {
   text: string;
   isFinal: boolean;
@@ -12,8 +11,7 @@ export type TokenChunk = {
 };
 
 export type AudioChunk = {
-  /** raw 16-bit PCM little-endian */
   data: Buffer;
-  sampleRate: number; // Allow any sample rate
+  sampleRate: number;
   isFinal: boolean;
 };

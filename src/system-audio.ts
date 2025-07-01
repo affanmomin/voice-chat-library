@@ -62,9 +62,7 @@ export class SystemAudioPlayer {
 
       try {
         unlinkSync(rawFile);
-      } catch (e) {
-        // Ignore cleanup errors
-      }
+      } catch (e) {}
 
       const playProcess = spawn("afplay", [wavFile], {
         stdio: "inherit",
@@ -95,9 +93,7 @@ export class SystemAudioPlayer {
     if (this.tempFile) {
       try {
         unlinkSync(this.tempFile);
-      } catch (error) {
-        // Ignore cleanup errors
-      }
+      } catch (error) {}
     }
   }
 }
@@ -166,9 +162,7 @@ export class StreamingAudioPlayer {
 
       try {
         unlinkSync(rawFile);
-      } catch (e) {
-        // Ignore cleanup errors
-      }
+      } catch (e) {}
 
       this.audioQueue.push({ file: wavFile, chunkNumber: this.chunkCount });
 
@@ -201,9 +195,7 @@ export class StreamingAudioPlayer {
       setTimeout(() => {
         try {
           unlinkSync(file);
-        } catch (e) {
-          // Ignore cleanup errors
-        }
+        } catch (e) {}
       }, 3000);
     }
 
@@ -241,7 +233,6 @@ export class StreamingAudioPlayer {
           this.currentPlayProcess &&
           !this.currentPlayProcess.killed
         ) {
-          // Don't kill the process, let it finish naturally
         }
       }, 30000);
     });
@@ -258,9 +249,7 @@ export class StreamingAudioPlayer {
       this.tempFiles.forEach((file) => {
         try {
           unlinkSync(file);
-        } catch (e) {
-          // Ignore cleanup errors
-        }
+        } catch (e) {}
       });
       this.tempFiles = [];
     }, 2000);
