@@ -83,6 +83,11 @@ export class VoiceBot extends EventEmitter<VoiceBotEvents> {
         await this.processUserInput(finalText, history);
         accumulatedText = "";
       }
+
+      // Process any remaining accumulated text at the end of the stream
+      if (accumulatedText.trim() && this.shouldProcessText(accumulatedText)) {
+        await this.processUserInput(accumulatedText.trim(), history);
+      }
     } catch (error) {
       if (!this.isAborted) {
         console.error("Engine error:", error);
@@ -171,6 +176,9 @@ export class VoiceBot extends EventEmitter<VoiceBotEvents> {
       });
 
       this.lastResponseTime = performance.now();
+    } catch (error) {
+      console.error("Processing error:", error);
+      throw error;
     } finally {
       this.isSpeaking = false;
       this.emit("speaking", false);

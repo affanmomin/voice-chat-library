@@ -132,13 +132,37 @@ This processes pre-recorded WAV files, transcribes them, generates AI responses,
 3. **Audio Synthesis**: 24kHz PCM output from OpenAI TTS
 4. **Playback**: Sequential chunk playback via system audio
 
-## Performance Metrics
+## Performance Metrics & Monitoring
 
-The system tracks key latency metrics:
-- `sttCompleteMs`: Time from audio start to final transcription
-- `firstTokenMs`: Time from STT completion to first LLM token
-- `fullAnswerMs`: Total time for complete response
-- `fullTtsMs`: Total time including audio synthesis
+The system tracks 3 core latency metrics:
+- **STT Latency** (`stt_duration_ms`): Speech-to-text processing time
+- **LLM Latency** (`llm_duration_ms`): Complete LLM response generation time  
+- **TTS Latency** (`tts_duration_ms`): Text-to-speech processing time
+
+### Built-in Performance Dashboard
+
+Get beautiful real-time metrics with zero setup:
+
+```bash
+# Start your voice bot (dashboard included)
+npm start
+
+# Open the dashboard
+open http://localhost:9464/dashboard
+```
+
+Access your metrics:
+- **Performance Dashboard**: http://localhost:9464/dashboard (Beautiful HTML interface)
+- **Raw Prometheus Metrics**: http://localhost:9464/metrics
+- **Health Check**: http://localhost:9464/health
+
+The dashboard automatically shows:
+- Real-time metric cards with averages and totals  
+- Color-coded performance indicators (🟢🟡🔴)
+- Auto-refresh every 5 seconds
+- No external dependencies required
+
+See `PROMETHEUS_SETUP.md` for detailed dashboard features.
 
 ## Configuration Options
 

@@ -5,6 +5,7 @@ import { DeepgramSTT } from "./providers/deepgram";
 import { OpenAIChat } from "./providers/openai-llm";
 import { OpenAITTS } from "./providers/openai-tts";
 import { VoiceBot } from "./engine";
+import { MetricsServer } from "./metrics-server";
 import mic from "mic";
 import Speaker from "speaker";
 
@@ -31,6 +32,7 @@ speaker.on("drain", () => {
 });
 
 const bot = new VoiceBot(new DeepgramSTT(), new OpenAIChat(), new OpenAITTS());
+const metricsServer = new MetricsServer(9464);
 let isAISpeaking = false;
 let isMicrophoneActive = false;
 let currentMicInstance: ReturnType<typeof mic> | null = null;
@@ -127,7 +129,37 @@ bot.on("speaking", (isSpeaking) => {
 });
 
 bot.on("metrics", (metrics) => {
-  // ... existing code ...
+  // Record metrics to Prometheus
+  const { recordMetrics } = require("./metrics");
+  recordMetrics(metrics);
+
+  // Optional: Log metrics to console for debugging (only log defined values)
+  const parts = [];
+  if (typeof metrics.sttCompleteMs === "number")
+    parts.push(`STT: ${metrics.sttCompleteMs.toFixed(0)}ms`);
+  if (typeof metrics.firstTokenMs === "number")
+    parts.push(`First Token: ${metrics.firstTokenMs.toFixed(0)}ms`);
+  if (typeof metrics.fullAnswerMs === "number")
+    parts.push(`Full LLM: ${metrics.fullAnswerMs.toFixed(0)}ms`);
+  if (typeof metrics.fullTtsMs === "number")
+    parts.push(`TTS: ${metrics.fullTtsMs.toFixed(0)}ms`);
+
+  if (parts.length > 0) {
+    console.log(`\n📊 Metrics - ${parts.join(" | ")}`);
+  }
 });
 
-startListening();
+// Start metrics server
+metricsServer.start().then(() => {
+  console.log("🚀 Voice bot started with Prometheus metrics enabled");
+  startListening();
+});
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  console.log("\n🛑 Shutting down...");
+  bot.abort();
+  stopListening();
+  await metricsServer.stop();
+  process.exit(0);
+});
