@@ -23,11 +23,13 @@ export class OpenAITTS implements TTSProvider {
 
       const shouldSynthesize =
         part === "__FINAL__" ||
-        (buffer.length >= 100 &&
+        (buffer.length >= 30 &&
           (buffer.endsWith(".") ||
             buffer.endsWith("!") ||
-            buffer.endsWith("?"))) ||
-        buffer.length >= 200;
+            buffer.endsWith("?") ||
+            buffer.endsWith(",") ||
+            buffer.includes(". "))) ||
+        buffer.length >= 80;
 
       if (!shouldSynthesize) continue;
 

@@ -1,6 +1,7 @@
 import { spawn } from "child_process";
 import { writeFileSync, unlinkSync } from "fs";
 import { join } from "path";
+const mic = require("mic");
 
 export class SystemAudioPlayer {
   private audioBuffers: Buffer[] = [];
@@ -253,5 +254,37 @@ export class StreamingAudioPlayer {
       });
       this.tempFiles = [];
     }, 2000);
+  }
+}
+
+export class MicrophoneAudioSource {
+  private micInstance: any;
+  private audioStream: any;
+
+  constructor() {
+    // Configure microphone for 48kHz, 16-bit, mono
+    this.micInstance = mic({
+      rate: "48000",
+      channels: "1",
+      debug: false,
+      exitOnSilence: 6,
+    });
+
+    this.audioStream = this.micInstance.getAudioStream();
+  }
+
+  async *getAudioStream(): AsyncIterable<Buffer> {
+    this.micInstance.start();
+
+    // Convert the audio stream to an async iterable
+    for await (const chunk of this.audioStream) {
+      yield chunk;
+    }
+  }
+
+  stop(): void {
+    if (this.micInstance) {
+      this.micInstance.stop();
+    }
   }
 }
